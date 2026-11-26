@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TT-RSI · Beyond Self-Consistency: Recursive Self-Improvement at Test Time</title>
+  <meta name="description" content="TT-RSI improves LLMs at test time by building on their own previous attempts — in context at inference (In-Context RSI) and in the weights by label-free self-distillation (In-Weight RSI). +13.89% over the base model; +4.79% over the strongest self-consistency method at the same budget.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Beyond Self-Consistency: Recursive Self-Improvement at Test Time (TT-RSI)">
+  <meta property="og:description" content="Stop voting, start improving: LLMs that build on their own attempts at test time — in context and in weights — with no labels.">
+  <meta property="og:url" content="https://uanu2002.github.io/TT-RSI/">
+  <meta property="og:image" content="https://uanu2002.github.io/TT-RSI/static/images/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TT-RSI: Recursive Self-Improvement at Test Time">
+  <meta name="twitter:description" content="Label-free test-time improvement that goes beyond self-consistency. +13.89% avg over base on competition math.">
+  <meta name="twitter:image" content="https://uanu2002.github.io/TT-RSI/static/images/og.png">
+  <link rel="icon" type="image/png" href="static/images/robots/happy.png">
+
+  <link rel="preload" href="static/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="static/fonts/newsreader-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="static/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="static/css/style.css">
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a class="nav-logo" href="#top"><img src="static/images/robots/happy.png" alt="">TT-RSI</a>
+    <div class="nav-links">
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#example">Example</a>
+      <a href="#cite">BibTeX</a>
+    </div>
+    <a class="nav-cta" href="https://arxiv.org/abs/2611.30965" target="_blank" rel="noopener">arXiv</a>
+  </div>
+  <div class="progress" id="progress"></div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1>Beyond Self-Consistency: <em>Recursive Self-Improvement</em> at Test Time</h1>
+    <p class="tagline">LLMs that build on their own previous attempts instead of voting over independent ones — in context at inference, and in their weights during test-time training.</p>
+
+    <div class="authors">
+      <span>Jianyu Wu<sup>1,2</sup></span>
+      <span>Yizhou Wang<sup>2,3</sup></span>
+      <span>Encheng Su<sup>2,4</sup></span>
+      <span>Jinouwen Zhang<sup>2</sup></span>
+      <span>Pengze Li<sup>2,5</sup></span>
+      <span>Lintao Wang<sup>2,6</sup></span>
+      <span>Chen Tang<sup>2,3</sup></span>
+      <span>Aoran Wang<sup>2</sup></span>
+      <span>Wanli Ouyang<sup>3</sup></span>
+      <span>Shixiang Tang<sup>2,3,*</sup></span>
+    </div>
+    <div class="affils">
+      <span><sup>1</sup>Shanghai Jiao Tong University</span>
+      <span><sup>2</sup>Shanghai Artificial Intelligence Laboratory</span>
+      <span><sup>3</sup>The Chinese University of Hong Kong</span>
+      <span><sup>4</sup>University of Science and Technology of China</span>
+      <span><sup>5</sup>Fudan University</span>
+      <span><sup>6</sup>The University of Sydney</span>
+      <span><sup>*</sup>Corresponding author</span>
+    </div>
+
+    <div class="links">
+      <a class="btn" href="https://arxiv.org/pdf/2611.30965" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Paper</a>
+      <a class="btn" href="https://github.com/uanu2002/TT-RSI" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code</a>
+      <a class="btn ghost" href="#video">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>Video</a>
+      <a class="btn ghost" href="#cite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg>BibTeX</a>
+    </div>
+
+    <div class="video-card" id="video">
+      <video controls playsinline preload="metadata" poster="static/videos/poster.jpg">
+        <source src="static/videos/tt-rsi.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value"><span class="up">+13.89</span><small>%</small></div>
+        <div class="stat-label">average accuracy over the <b>base model</b></div>
+      </div>
+      <div class="stat">
+        <div class="stat-value"><span class="up">+4.79</span><small>%</small></div>
+        <div class="stat-label">over <b>TTPO + SC</b>, the strongest self-consistency method, at the <b>same test-time budget</b></div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">−68.6<small>%</small></div>
+        <div class="stat-label"><b>fewer tokens</b>: In-Context RSI beats 10-sample self-consistency by its 5th attempt</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ OVERVIEW -->
+<section class="block" id="overview">
+  <div class="wrap">
+    <div class="text reveal">
+      <div class="kicker">Motivation</div>
+      <h2>Voting is not improving</h2>
+      <p class="lead">At test time a model must judge its own answers on unlabeled questions. Most current methods resolve this with <b>self-consistency</b>: sample independent solutions and take the majority. That wastes earlier reasoning at inference, and when the majority is wrong, training on it reinforces the error — so improvement stalls instead of accumulating.</p>
+    </div>
+
+    <figure class="reveal">
+      <div class="figure-card"><img src="static/images/fig1_teaser.png" alt="Self-Consistency versus TT-RSI: parallel attempts and majority vote versus successive refinement and self-improvement signal" loading="lazy" width="1716" height="740"></div>
+      <figcaption><b>Self-Consistency vs. TT-RSI.</b> (a) Self-consistency takes the most frequent answer as both the output and the training target. (b) TT-RSI reuses reasoning across attempts for efficient inference, and trains on self-improvement to strengthen both answering and refinement. Humans do the same: keep the useful reasoning, revise the mistakes, improve the strategy (Pólya, 1945).</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================ METHOD -->
+<section class="block" id="method">
+  <div class="wrap">
+    <div class="text reveal">
+      <div class="kicker">Method</div>
+      <h2>One improvement step, used twice</h2>
+      <p class="lead">The core is an <b>improvement step</b>: re-solve the question with the previous solution in context. Only the latest solution is carried forward, so attempts form a Markov chain \(a_1 \to a_2 \to \cdots \to a_\ell\). Because later solutions improve on earlier ones, they can also supervise them — and that is what training uses.</p>
+    </div>
+
+    <figure class="reveal">
+      <div class="figure-card"><img src="static/images/fig2_overview.png" alt="Overview of TT-RSI: In-Context RSI produces a chain of refinements; In-Weight RSI distills them via Recursive and Accelerated Distillation" loading="lazy" width="1756" height="1100"></div>
+      <figcaption><b>Overview.</b> In-Context RSI generates \(a_1\) then repeatedly re-solves the question given the full previous solution. In-Weight RSI distills each refinement into the weights through a frozen initial-model teacher: Recursive Distillation trains answering and refinement, Accelerated Distillation emphasizes the tokens where refinement changed the teacher's guidance.</figcaption>
+    </figure>
+
+    <div class="grid-2 reveal" style="margin-top:22px;align-items:start">
+      <div class="card">
+        <span class="badge teal">Inference · training-free</span>
+        <h4>In-Context RSI</h4>
+        <p>Each attempt receives the <b>full</b> previous solution — derivation and answer — presented neutrally as “a previous attempt”, with no hint whether it is correct. The model decides what to reuse, rework, or solve anew, so even a wrong solution contributes reusable steps.</p>
+<pre class="prompt"><span class="ph">{question}</span>
+
+A previous attempt at solving this problem was:
+
+<span class="ph">{previous solution}</span>
+
+<span class="hl">Please solve the problem independently.</span>
+Reason step by step, and put your final answer within \boxed{}.</pre>
+      </div>
+      <div class="card">
+        <span class="badge violet">Training · label-free</span>
+        <h4>In-Weight RSI</h4>
+        <p>The first two solutions of the chain \(a_1, a_2\) become privileged references for on-policy self-distillation. The teacher sees one step ahead:</p>
+        <div class="eq">\[\mathcal{L}_{\text{ans}} = D\big(\mathrm{sg}[\pi_{\theta_0}(\cdot\mid q, a_1)] \,\big\|\, \pi_\theta(\cdot\mid q)\big)\]</div>
+        <div class="eq">\[\mathcal{L}_{\text{ref}} = D\big(\mathrm{sg}[\pi_{\theta_0}(\cdot\mid q, a_2)] \,\big\|\, \pi_\theta(\cdot\mid q, a_1)\big)\]</div>
+        <p><b>Accelerated Distillation</b> adds the \(a_2\)-conditioned teacher on the first attempt, up-weighting tokens where refinement shifted its guidance:</p>
+        <div class="eq">\[\omega_t = 1-\alpha+2\alpha\,\frac{d_t}{d_t+\tau},\qquad \mathcal{L} = \mathcal{L}_{\text{Rec}} + w_{\text{Acc}}\,\mathcal{L}_{\text{Acc}}\]</div>
+        <p class="small muted" style="margin:8px 0 0">The updated model answers better and refines better, producing stronger references for the next round.</p>
+      </div>
+    </div>
+
+    <div class="text reveal" style="margin-top:44px">
+      <h3 class="subhead">Why it works</h3>
+      <p class="small muted">Each refinement fixes a wrong answer with probability \(f\) and breaks a correct one with probability \(b\); distillation is a one-step bootstrap. Drag the sliders to see what each implies.</p>
+    </div>
+
+    <div class="grid-2 reveal" style="margin-top:14px;align-items:start">
+      <div class="widget" id="fb-widget">
+        <div class="widget-head">
+          <span class="widget-title">Refinement: fix vs. break</span>
+          <span class="widget-sub">Proposition 1</span>
+        </div>
+        <div class="controls">
+          <label class="slider">fix \(f\) <input type="range" id="fb-f" min="0.5" max="20" step="0.25" value="4" aria-label="fix rate"><output id="fb-f-o"></output></label>
+          <label class="slider">break \(b\) <input type="range" id="fb-b" min="0.25" max="20" step="0.25" value="2" aria-label="break rate"><output id="fb-b-o"></output></label>
+          <label class="slider">\(\mathrm{acc}_1\) <input type="range" id="fb-a" min="10" max="90" step="1" value="54" aria-label="first-attempt accuracy"><output id="fb-a-o"></output></label>
+        </div>
+        <div class="chart" id="fb-chart"></div>
+        <div class="readout" id="fb-readout"></div>
+      </div>
+
+      <div class="widget" id="chain-widget">
+        <div class="widget-head">
+          <span class="widget-title">Distillation: where attempts land</span>
+          <span class="widget-sub">Theorem 1 &amp; Proposition 2</span>
+        </div>
+        <div class="controls">
+          <label class="slider">exact backups \(n\) <input type="range" id="ch-n" min="0" max="5" step="1" value="2" aria-label="number of exact backups"><output id="ch-n-o"></output></label>
+        </div>
+        <div class="chain-scroll"><div class="chain-inner">
+          <div class="chain" id="chain" aria-hidden="true"></div>
+          <div class="chain-track"><span class="acc-pin" id="acc-pin"></span></div>
+        </div></div>
+        <div class="chain-legend">
+          <span><i style="background:var(--teal)"></i>trained 1st attempt</span>
+          <span><i style="background:#57b6c3"></i>2nd</span>
+          <span><i style="background:#9bd3db"></i>3rd</span>
+          <span><i class="tri"></i>1st attempt w/ acceleration</span>
+        </div>
+        <div class="readout" id="ch-readout"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ RESULTS -->
+<section class="block" id="results">
+  <div class="wrap">
+    <div class="text reveal">
+      <div class="kicker">Results</div>
+      <h2>Better at every scale</h2>
+      <p class="lead">Qwen3-1.7B, 4B and 8B on five competition-math benchmarks (AIME 2025/2026, HMMT Feb 2025/2026, BRUMO 2025), against five label-free test-time training methods. Labels are used only for evaluation.</p>
+    </div>
+
+    <div class="reveal" style="margin-top:22px">
+      <div class="controls" style="justify-content:space-between">
+        <div class="seg" role="tablist" id="t1-tabs">
+          <button role="tab" aria-selected="false" data-model="Qwen3-1.7B">Qwen3-1.7B</button>
+          <button role="tab" aria-selected="true" data-model="Qwen3-4B">Qwen3-4B</button>
+          <button role="tab" aria-selected="false" data-model="Qwen3-8B">Qwen3-8B</button>
+        </div>
+        <span class="small muted">Accuracy (%). <b>Bold</b> best, underline second best in each group.</span>
+      </div>
+      <div class="table-wrap" style="margin-top:8px"><table class="data" id="table1"></table></div>
+      <p class="table-note">TT-RSI applies In-Context RSI (one initial solution + ten refinements) to the In-Weight RSI model; TTPO + SC uses self-consistency on the TTPO model with the same token budget.</p>
+    </div>
+
+    <div class="chart-card reveal" id="card-eff" style="margin-top:16px">
+      <button class="view-toggle" data-toggle="card-eff">Table</button>
+      <h4>Refining beats resampling</h4>
+      <div class="sub">Qwen3-4B, mean over AIME26 &amp; HMMT26, against cumulative generated tokens</div>
+      <div class="legend" id="eff-legend"></div>
+      <div class="chart" id="eff-chart"></div>
+      <div class="table-view" id="eff-table"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ ANALYSIS -->
+<section class="block" id="analysis">
+  <div class="wrap">
+    <div class="text reveal">
+      <div class="kicker">Analysis</div>
+      <h2>Two things voting cannot do</h2>
+    </div>
+
+    <div class="grid-2 reveal" style="margin-top:20px">
+      <div class="card">
+        <h4>It moves past a wrong majority</h4>
+        <p>On the six AIME26 questions whose Base majority is wrong, several self-consistency methods fall <i>below</i> Base. In-Weight RSI more than doubles accuracy on them, and its majority vote becomes correct on 2 of the 6 (others: at most 1).</p>
+        <div class="chart-card flat" id="card-wrong">
+          <button class="view-toggle" data-toggle="card-wrong">Table</button>
+          <div class="sub">avg@64 on those 6 questions</div>
+          <div class="chart" id="wrong-chart"></div>
+          <div class="table-view" id="wrong-table"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>Its gains accumulate in the weights</h4>
+        <p>Tracking first-attempt accuracy over 100 updates, In-Weight RSI climbs throughout to <b>59.61%</b> (+5.77% over Base), while the baselines stay near — or dip below — where they started.</p>
+        <div class="chart-card flat" id="card-train">
+          <button class="view-toggle" data-toggle="card-train">Table</button>
+          <div class="sub">Mean over AIME26 &amp; HMMT26; hairline = Base</div>
+          <div class="legend" id="train-legend"></div>
+          <div class="chart" id="train-chart"></div>
+          <div class="table-view" id="train-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="small muted reveal" style="margin-top:18px">Also in the paper: design ablations (§4.3), cross-benchmark transfer (§4.4), training cost (8.53 min/update, 2.29–5.36× faster than baselines), and the balance-point theory (§3.2, App. A).</p>
+  </div>
+</section>
+
+<!-- ============================================================ EXAMPLE -->
+<section class="block" id="example">
+  <div class="wrap">
+    <div class="text reveal">
+      <div class="kicker">Example</div>
+      <h2>Training accelerates refinement</h2>
+      <p class="lead">An HMMT26 problem. Self-consistency picks a wrong most-frequent answer; the base model's refinement chain gets there after ten steps; after In-Weight RSI, the chain gets there at \(a_2\). <span class="revise">Blue</span> marks reasoning revisions.</p>
+    </div>
+
+    <div class="reveal" style="margin-top:20px">
+      <div class="case-problem"><span class="tag">Problem</span><span>A unit stick has one red endpoint. Repeatedly choose a piece uniformly and halve it. Find the expected red-end length after five splits.</span></div>
+      <div class="case-cols">
+        <div class="case-col sc">
+          <header><img src="static/images/robots/doubt.png" alt="">Self-Consistency<span class="range">11 samples</span></header>
+          <div class="body">
+            <p class="quote" style="margin-bottom:4px">“average of the lengths of all sticks divided by 2”</p>
+            <p>\(E(n+1) = \dfrac{1}{2(n+1)} \;\Longrightarrow\; \dfrac{1}{10}\)</p>
+            <div class="votes" aria-label="Answer counts among 11 independent samples">
+              <div class="vote-row pick"><span>\(1/10\)</span><span class="bar" style="width:100%"></span><span class="n">3</span></div>
+              <div class="vote-row"><span>\(1/32\)</span><span class="bar" style="width:66.7%"></span><span class="n">2</span></div>
+              <div class="vote-row true"><span>\(63/256\)</span><span class="bar" style="width:66.7%"></span><span class="n">2</span></div>
+              <div class="vote-row"><span class="muted">4 others</span><span class="bar" style="width:33.3%"></span><span class="n">1</span></div>
+            </div>
+            <span class="verdict no">✗ Selected 1/10 — the correct 63/256 is outvoted</span>
+          </div>
+        </div>
+        <div class="case-col base">
+          <header><img src="static/images/robots/think.png" alt="">Base + In-Context RSI<span class="range">\(a_{10}\to a_{11}\)</span></header>
+          <div class="body">
+            <div class="step"><span class="k">a<sub>10</sub></span><span>\(E(n) = \dfrac{1}{2n} \;\Longrightarrow\; \dfrac{1}{10}\)&ensp;<span class="verdict no">✗</span></span></div>
+            <div class="refine"><b>↓ Refine</b><span class="revise">Use the sum of squared piece lengths.</span></div>
+            <div class="step"><span class="k">a<sub>11</sub></span><span class="revise">\(S(n) = S(n-1)\Big(1-\dfrac{1}{2n}\Big)\)</span></div>
+            <span class="verdict ok">✓ Answer: 63/256</span>
+            <p class="small muted" style="margin:10px 0 0">Correct — after ten refinements.</p>
+          </div>
+        </div>
+        <div class="case-col trained">
+          <header><img src="static/images/robots/grad.png" alt="">Trained + In-Context RSI<span class="range">\(a_1\to a_2\)</span></header>
+          <div class="body">
+            <div class="step"><span class="k">a<sub>1</sub></span><span>\(E(n+1) = E(n)\,\dfrac{2-E(n)}{2}\)&ensp;<span class="verdict no">✗</span></span></div>
+            <div class="refine"><b>↓ Refine</b><span class="revise">Count the \(n+1\) pieces after \(n\) splits.</span></div>
+            <div class="step"><span class="k">a<sub>2</sub></span><span class="revise">\(E(n+1) = E(n)\,\dfrac{2n+1}{2(n+1)}\)</span></div>
+            <span class="verdict ok">✓ Answer: 63/256</span>
+            <p class="small muted" style="margin:10px 0 0">Correct at \(a_2\) instead of \(a_{11}\).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CITE -->
+<section class="block" id="cite">
+  <div class="text reveal">
+    <div class="kicker">Citation</div>
+    <h2>BibTeX</h2>
+    <div class="bib">
+      <button class="copy-btn" data-copy="bib-text">Copy</button>
+<pre id="bib-text">@article{wu2026ttrsi,
+  title   = {Beyond Self-Consistency: Recursive Self-Improvement at Test Time},
+  author  = {Wu, Jianyu and Wang, Yizhou and Su, Encheng and Zhang, Jinouwen and
+             Li, Pengze and Wang, Lintao and Tang, Chen and Wang, Aoran and
+             Ouyang, Wanli and Tang, Shixiang},
+  journal = {arXiv preprint arXiv:2611.30965},
+  year    = {2026}
+}</pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 The TT-RSI authors. Figures and mascots are from the paper.</span>
+    <span><a href="https://github.com/uanu2002/TT-RSI" target="_blank" rel="noopener">GitHub</a> · <a href="https://arxiv.org/abs/2611.30965" target="_blank" rel="noopener">arXiv</a></span>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Enlarged figure"><img alt=""></div>
+
+<script src="static/vendor/katex/katex.min.js" defer></script>
+<script src="static/vendor/katex/contrib/auto-render.min.js" defer></script>
+<script src="static/js/data.js" defer></script>
+<script src="static/js/charts.js" defer></script>
+<script src="static/js/main.js" defer></script>
+</body>
+</html>
